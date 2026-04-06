@@ -1,6 +1,6 @@
 # Scriptcase CodeMirror 5 Pro Enhancer
 
-Este Script de Usuario (Tampermonkey) transforma el editor nativo de **Scriptcase** en un entorno de desarrollo mucho más potente, similar a VS Code, añadiendo funcionalidades críticas de productividad, formateo y navegación de código.
+Este Script de Usuario (Tampermonkey) transforma el editor nativo de **Scriptcase** en un entorno de desarrollo más potente, añadiendo funcionalidades críticas de productividad, formateo y navegación de código.
 
 ## 🛠 Instalación
 
