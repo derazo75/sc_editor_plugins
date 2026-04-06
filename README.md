@@ -42,15 +42,10 @@ Este Script de Usuario (Tampermonkey) transforma el editor nativo de **Scriptcas
 ---
 
 ## 🔗 Sincronización de Snippets
-El script consume automáticamente un archivo JSON remoto. Para personalizar tus fragmentos de código, edita tu archivo `snippets.json` en GitHub:
+El script consume automáticamente un archivo JSON remoto, para tus propios snippets crea un snippets.json remoto y cambia edita el js de tampermonkey:
 
 ```json
 {
   "foreach": "foreach ($0 as $key => $value) {\n    \n}",
   "printr": "echo '<pre>';\nprint_r($0);\necho '</pre>';"
 }
-El sistema detecta automáticamente etiquetas HTML en los snippets y las muestra como texto plano en el menú para evitar errores de renderizado.
-
-Desarrollado por: Fernando Erazo
-
-Compatibilidad: Scriptcase (CodeMirror 5) en Ubuntu 24.04 / Windows.
