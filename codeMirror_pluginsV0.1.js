@@ -85,19 +85,18 @@
   */
   function formatCode(cm) {
     cm.operation(() => {
+      // --- CAPTURAR ESTADO ---
+      const cursor = cm.getCursor();
+      const scrollInfo = cm.getScrollInfo();
       let value = cm.getValue();
 
-      // 1. NORMALIZAR ESTRUCTURAS (Subir llaves y asegurar espacios)
-      // Sube llaves de if, else, for, foreach, while, switch que estén en la línea siguiente
+      // 1. NORMALIZAR ESTRUCTURAS
       value = value.replace(
         /\b(if|else|for|foreach|while|switch|try|catch|finally)\b\s*\((.*?)\)\s*\n\s*\{/g,
         "$1 ($2) {",
       );
 
-      // Caso especial para 'else {' (que no lleva paréntesis)
       value = value.replace(/\belse\b\s*\n\s*\{/g, "else {");
-
-      // Asegurar UN espacio antes de la llave si quedó pegada: if(){ -> if() {
       value = value.replace(/\)\s*\{/g, ") {");
       value = value.replace(/\belse\s*\{/g, "else {");
 
@@ -154,12 +153,16 @@
           cm.indentLine(j, "smart");
         }
       }
+
+      // --- RESTAURAR ESTADO ---
+      cm.setCursor(cursor);
+      cm.scrollTo(scrollInfo.left, scrollInfo.top);
     });
+
     console.log(
-      "🛠️ Formato Pro: Llaves subidas, espacios corregidos y asignaciones alineadas.",
+      "🛠️ Formato Pro: Llaves subidas, asignaciones alineadas y posición mantenida.",
     );
   }
-
   function showSnippetHints(cm) {
     const cursor = cm.getCursor();
     const token = cm.getTokenAt(cursor);
