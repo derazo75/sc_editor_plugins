@@ -4,9 +4,7 @@
 // @version      0.2
 // @description  Cierre de llaves, resaltado de línea y brackets para Scriptcase
 // @author       Fernando erazo
-// @match        *://localhost/*
-// @match        *://127.0.0.1/*
-// @match        *://localhost:8000/*
+// @match        *://localhost:9000/*
 // @match        *://*/scriptcase/devel/*
 
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js
@@ -76,13 +74,90 @@
     return `${prefix}_${apl}_${event}_${Math.abs(hash)}`;
   }
 
-  function formatCode(cm) {
+  /*  function formatCode(cm) {
     const lastLine = cm.lineCount();
     cm.operation(() => {
       for (let i = 0; i < lastLine; i++) {
         cm.indentLine(i, "smart");
       }
     });
+  }
+  */
+  function formatCode(cm) {
+    cm.operation(() => {
+      let value = cm.getValue();
+
+      // 1. NORMALIZAR ESTRUCTURAS (Subir llaves y asegurar espacios)
+      // Sube llaves de if, else, for, foreach, while, switch que estén en la línea siguiente
+      value = value.replace(
+        /\b(if|else|for|foreach|while|switch|try|catch|finally)\b\s*\((.*?)\)\s*\n\s*\{/g,
+        "$1 ($2) {",
+      );
+
+      // Caso especial para 'else {' (que no lleva paréntesis)
+      value = value.replace(/\belse\b\s*\n\s*\{/g, "else {");
+
+      // Asegurar UN espacio antes de la llave si quedó pegada: if(){ -> if() {
+      value = value.replace(/\)\s*\{/g, ") {");
+      value = value.replace(/\belse\s*\{/g, "else {");
+
+      // 2. FORZAR ETIQUETAS PHP AL INICIO DE LÍNEA
+      value = value.replace(/^[ \t]+(<\?php|<\?)/gm, "$1");
+
+      // 3. ALINEACIÓN DE SIGNOS IGUAL (=) EN BLOQUES
+      const lines = value.split("\n");
+      let i = 0;
+      while (i < lines.length) {
+        if (
+          lines[i].includes("=") &&
+          !/^\s*(if|for|while|foreach|switch|return)/i.test(lines[i])
+        ) {
+          let start = i;
+          let maxPos = 0;
+          let block = [];
+
+          while (
+            i < lines.length &&
+            lines[i].includes("=") &&
+            !/^\s*(if|for|while|foreach|switch|return)/i.test(lines[i])
+          ) {
+            let parts = lines[i].split("=");
+            let leftSide = parts[0].trimEnd();
+            maxPos = Math.max(maxPos, leftSide.trim().length);
+            block.push({
+              left: leftSide.trim(),
+              right: parts.slice(1).join("=").trim(),
+            });
+            i++;
+          }
+
+          if (block.length > 1) {
+            for (let j = 0; j < block.length; j++) {
+              lines[start + j] =
+                block[j].left.padEnd(maxPos) + " = " + block[j].right;
+            }
+          }
+        } else {
+          i++;
+        }
+      }
+      value = lines.join("\n");
+      cm.setValue(value);
+
+      // 4. INDENTACIÓN INTELIGENTE FINAL
+      const lastLine = cm.lineCount();
+      for (let j = 0; j < lastLine; j++) {
+        const lineText = cm.getLine(j).trim();
+        if (lineText.startsWith("<?php") || lineText.startsWith("<?")) {
+          cm.indentLine(j, 0);
+        } else {
+          cm.indentLine(j, "smart");
+        }
+      }
+    });
+    console.log(
+      "🛠️ Formato Pro: Llaves subidas, espacios corregidos y asignaciones alineadas.",
+    );
   }
 
   function showSnippetHints(cm) {
