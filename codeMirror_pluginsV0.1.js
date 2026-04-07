@@ -85,12 +85,10 @@
     });
   }
 
-  // 4. Lógica de Autocompletado (Snippets)
   function showSnippetHints(cm) {
     const cursor = cm.getCursor();
     const token = cm.getTokenAt(cursor);
 
-    // Si el token es un operador o espacio, forzamos una búsqueda vacía para mostrar todo
     const isInvalidToken = /[^a-zA-Z0-9_]/.test(token.string);
     const currentWord = isInvalidToken ? "" : token.string.toLowerCase();
 
@@ -103,17 +101,22 @@
     cm.showHint({
       hint: function () {
         const listaHints = filteredKeys.map((key) => {
-          const fullText = SNIPPETS[key].replace("$0", "");
-          const previewText = fullText.replace(/\s+/g, " ").substring(0, 60);
+          // IMPORTANTE: No quitamos el $0 aquí para poder rastrearlo luego
+          const rawText = SNIPPETS[key];
+          const previewText = rawText
+            .replace("$0", "")
+            .replace(/\s+/g, " ")
+            .substring(0, 60);
+
           return {
-            text: fullText,
+            text: rawText, // Insertamos el texto original con la marca
             displayText: key,
             render: (el, self, data) => {
               const container = document.createElement("div");
               container.style =
                 "display: flex; justify-content: space-between; width: 100%; min-width: 300px;";
               container.innerHTML = `<span><strong>📝 ${data.displayText}</strong></span>
-                                     <span style="color:#888; font-size: 0.9em; margin-left: 15px;">${previewText}...</span>`;
+                                               <span style="color:#888; font-size: 0.9em; margin-left: 15px;">${previewText}...</span>`;
               el.appendChild(container);
             },
           };
@@ -121,7 +124,6 @@
 
         return {
           list: listaHints,
-          // Si el token era inválido (espacio/punto), empezamos el reemplazo en la posición del cursor
           from: isInvalidToken
             ? cursor
             : CodeMirror.Pos(cursor.line, token.start),
@@ -131,6 +133,28 @@
       completeSingle: false,
       alignWithWord: true,
       closeOnUnfocus: true,
+    });
+
+    // --- EL MOTOR DE TELETRANSPORTE ---
+    // Escuchamos el evento 'pick' que se dispara al elegir un snippet
+    CodeMirror.on(cm, "endCompletion", function () {
+      // Buscamos el $0 en todo el documento (o podrías limitar el rango por rendimiento)
+      const content = cm.getValue();
+      const marker = "$0";
+      const index = content.indexOf(marker);
+
+      if (index !== -1) {
+        const pos = cm.posFromIndex(index);
+
+        // 1. Borramos el marcador $0
+        cm.replaceRange("", pos, cm.posFromIndex(index + marker.length));
+
+        // 2. Ponemos el cursor en esa posición exacta
+        cm.setCursor(pos);
+
+        // 3. Opcional: Refrescar para asegurar que el foco se vea
+        cm.focus();
+      }
     });
   }
 
