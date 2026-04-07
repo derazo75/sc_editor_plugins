@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Scriptcase - CodeMirror 5 Plugins
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Cierre de llaves, resaltado de línea y brackets para Scriptcase
 // @author       Fernando erazo
 // @match        *://localhost/*
@@ -21,9 +21,9 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchtags.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/mode/multiplex.min.js
-
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/comment/continuecomment.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/comment/comment.min.js
+
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @grant        GM_xmlhttpRequest
@@ -33,23 +33,21 @@
 (function () {
   "use strict";
 
-  // --- ESTILOS VISUALES ---
-  // Inyectamos el CSS base del plugin Active Line
-  const activeLineCSS = GM_getResourceText("CM_CSS");
-  GM_addStyle(activeLineCSS);
+  let SNIPPETS = {};
 
-  // Personalización: Línea activa (azul muy tenue) y Brackets (rojo negrita)
-  GM_addStyle(`
-        .CodeMirror-activeline-background { background: rgba(0, 150, 255, 0.08) !important; }
-        .CodeMirror-matchingbracket {color: #FF0000 !important;font-weight: bold !important;text-decoration: underline !important;border-bottom: 1px solid red;}
-        .CodeMirror-matchingtag {background: rgba(255, 150, 0, 0.3) !important;border-bottom: 1px solid orange;border-top: 1px solid orange;}
-        .cm-matchhighlight { background-color: rgba(255, 255, 0, 0.3) !important;}
-        .cm-comment {color: #00FFFF !important; font-style: italic;opacity: 1 !important;}
-        .cm-phpdoc-tag {color: #FFD700 !important; font-weight: bold !important; text-shadow: 0 0 2px rgba(255, 215, 0, 0.3);}
-    `);
+  // 1. Configuración de Estilos
+  function inyectarEstilos() {
+    GM_addStyle(`
+            .CodeMirror-activeline-background { background: rgba(0, 150, 255, 0.08) !important; }
+            .CodeMirror-matchingbracket { color: #FF0000 !important; font-weight: bold !important; text-decoration: underline !important; border-bottom: 1px solid red; }
+            .CodeMirror-matchingtag { background: rgba(255, 150, 0, 0.3) !important; border-bottom: 1px solid orange; border-top: 1px solid orange; }
+            .cm-matchhighlight { background-color: rgba(255, 255, 0, 0.3) !important; }
+            .cm-comment { color: #00FFFF !important; font-style: italic; opacity: 1 !important; }
+            .cm-phpdoc-tag { color: #FFD700 !important; font-weight: bold !important; text-shadow: 0 0 2px rgba(255, 215, 0, 0.3); }
+        `);
+  }
 
-  let SNIPPETS = {}; // Variable global
-
+  // 2. Gestión de Datos (GitHub)
   function cargarSnippetsDesdeGithub() {
     const url =
       "https://raw.githubusercontent.com/derazo75/sc_editor_plugins/main/snippets.json";
@@ -62,100 +60,30 @@
             SNIPPETS = JSON.parse(response.responseText);
             console.log("✅ Snippets sincronizados.");
           } catch (e) {
-            console.error("Error JSON", e);
+            console.error("Error JSON Snippets", e);
           }
         }
       },
     });
   }
 
-  function showSnippetHints(cm) {
-    cm.showHint({
-      hint: function () {
-        const cursor = cm.getCursor();
-        const token = cm.getTokenAt(cursor);
-        const start = token.start;
-        const end = cursor.ch;
-        const line = cursor.line;
+  // 3. Utilidades de Identificación y Formateo
+  function getSCStorageKey(prefix = "sc_hist") {
+    const params = new URLSearchParams(window.location.search);
+    const apl = params.get("nmgp_apl_orig") || params.get("apl_nome") || "apl";
+    const event = params.get("nmgp_art") || params.get("nmgp_pos") || "index";
+    const content = typeof editor !== "undefined" ? editor.getValue() : "";
 
-        // Obtenemos la palabra que se está escribiendo actualmente
-        const currentWord = token.string.toLowerCase();
-
-        // Filtramos los snippets dinámicamente según lo que escribes
-        const filteredKeys = Object.keys(SNIPPETS).filter(
-          (key) =>
-            key.toLowerCase().includes(currentWord) || currentWord === "",
-        );
-
-        const listaHints = filteredKeys.map((key) => {
-          const fullText = SNIPPETS[key].replace("$0", "");
-          const previewText = fullText.replace(/\s+/g, " ").substring(0, 80);
-          const hasMore = fullText.length > 80;
-
-          return {
-            text: fullText,
-            displayText: key,
-            render: (el, self, data) => {
-              const container = document.createElement("div");
-              container.style.whiteSpace = "nowrap";
-              container.style.display = "flex";
-              container.style.alignItems = "center";
-
-              const titleSpan = document.createElement("span");
-              titleSpan.style.fontWeight = "bold";
-              titleSpan.style.color = "#000";
-              titleSpan.textContent = `📝 ${data.displayText}:`;
-
-              const previewSpan = document.createElement("span");
-              previewSpan.style.color = "#666";
-              previewSpan.style.fontStyle = "italic";
-              previewSpan.style.marginLeft = "8px";
-              previewSpan.textContent = previewText + (hasMore ? "..." : "");
-
-              container.appendChild(titleSpan);
-              container.appendChild(previewSpan);
-              el.appendChild(container);
-            },
-          };
-        });
-
-        return {
-          list: listaHints,
-          from: CodeMirror.Pos(line, start),
-          to: CodeMirror.Pos(line, end),
-        };
-      },
-      completeSingle: false,
-      alignWithWord: true,
-      closeOnUnfocus: true,
-    });
-  }
-  function guardarHistorialSC(editor) {
-    try {
-      const history = editor.getHistory();
-      // Usamos una llave única para el editor de Scriptcase actual
-      const storageKey = "sc_hist_" + window.location.pathname;
-      sessionStorage.setItem(storageKey, JSON.stringify(history));
-    } catch (e) {
-      console.warn("No se pudo guardar el historial:", e);
+    let hash = 0;
+    const sample = content.substring(0, 100);
+    for (let i = 0; i < sample.length; i++) {
+      hash = (hash << 5) - hash + sample.charCodeAt(i);
+      hash |= 0;
     }
-  }
-
-  function restaurarHistorialSC(editor) {
-    try {
-      const storageKey = "sc_hist_" + window.location.pathname;
-      const savedHistory = sessionStorage.getItem(storageKey);
-      if (savedHistory) {
-        editor.setHistory(JSON.parse(savedHistory));
-        console.log("🔄 Historial de Control+Z recuperado.");
-      }
-    } catch (e) {
-      console.warn("No se pudo restaurar el historial:", e);
-    }
+    return `${prefix}_${apl}_${event}_${Math.abs(hash)}`;
   }
 
   function formatCode(cm) {
-    // 1. Re-indentar todo el documento
     const lastLine = cm.lineCount();
     cm.operation(() => {
       for (let i = 0; i < lastLine; i++) {
@@ -164,115 +92,156 @@
     });
   }
 
-  // --- ACTIVACIÓN ---
-  function aplicarConfiguracion() {
-    if (typeof editor !== "undefined" && editor.setOption) {
-      CodeMirror.defineMode("php-heredoc", function (config) {
-        return CodeMirror.multiplexingMode(
-          // Modo Base (PHP que ya conoce Scriptcase)
-          CodeMirror.getMode(config, { name: "php", startOpen: true }),
-          {
-            open: "<<<HTML",
-            close: "HTML;",
-            mode: CodeMirror.getMode(config, "text/html"),
-            delimStyle: "keyword", // Colorea el <<<HTML como una palabra reservada
-          },
+  // 4. Lógica de Autocompletado (Snippets)
+  function showSnippetHints(cm) {
+    cm.showHint({
+      hint: function () {
+        const cursor = cm.getCursor();
+        const token = cm.getTokenAt(cursor);
+        const currentWord = token.string.toLowerCase();
+
+        const filteredKeys = Object.keys(SNIPPETS).filter(
+          (key) =>
+            key.toLowerCase().includes(currentWord) || currentWord === "",
         );
-      });
-      editor.setOption("mode", "php-heredoc");
 
-      const tagOverlay = {
-        token: function (stream) {
-          // Busca específicamente palabras que empiecen con @
-          if (
-            stream.match(
-              /^@(param|return|var|author|since|throws|category|package|copyright|license|version|link|deprecated|see)/,
-            )
-          ) {
-            return "phpdoc-tag"; // Usamos nuestra clase personalizada
-          }
-          // Avanza hasta encontrar el siguiente @ o el final de la línea
-          while (
-            stream.next() != null &&
-            !stream.match(
-              /^@(param|return|var|author|since|throws|category|package|copyright|license|version|link|deprecated|see)/,
-              false,
-            )
-          ) {}
-          return null;
-        },
-      };
+        const listaHints = filteredKeys.map((key) => {
+          const fullText = SNIPPETS[key].replace("$0", "");
+          const previewText = fullText.replace(/\s+/g, " ").substring(0, 80);
+          return {
+            text: fullText,
+            displayText: key,
+            render: (el, self, data) => {
+              const container = document.createElement("div");
+              container.style =
+                "display: flex; align-items: center; white-space: nowrap;";
+              container.innerHTML = `<span style="font-weight:bold; color:#000;">📝 ${data.displayText}:</span>
+                                                   <span style="color:#666; font-style:italic; margin-left:8px;">${previewText}${fullText.length > 80 ? "..." : ""}</span>`;
+              el.appendChild(container);
+            },
+          };
+        });
 
-      editor.addOverlay(tagOverlay);
-
-      editor.setOption("continueComments", true);
-
-      editor.setOption("autoCloseBrackets", true);
-      editor.setOption("matchBrackets", true);
-      editor.setOption("highlightSelectionMatches", {
-        showToken: /\w/,
-        annotateScrollbar: true,
-      });
-      editor.setOption("autoCloseTags", true);
-      editor.setOption("matchTags", { bothTags: true });
-      editor.setOption("tabSize", 4); // El ancho visual del tabulador
-      editor.setOption("indentUnit", 4); // Cuántos espacios insertar al tabular
-      editor.setOption("indentWithTabs", false);
-
-      editor.addKeyMap({
-        "Shift-Alt-G": function (cm) {
-          formatCode(cm);
-        },
-        Enter: "newlineAndIndentContinueComment",
-        "Ctrl-Alt-Space": function (cm) {
-          showSnippetHints(cm);
-        },
-      });
-
-      setTimeout(() => {
-        editor.refresh();
-      }, 250);
-      console.log("🎨 UX Boost V2: Plugins adicionales activados.");
-    }
+        return {
+          list: listaHints,
+          from: CodeMirror.Pos(cursor.line, token.start),
+          to: CodeMirror.Pos(cursor.line, cursor.ch),
+        };
+      },
+      completeSingle: false,
+      alignWithWord: true,
+      closeOnUnfocus: true,
+    });
   }
 
-  // Intentamos activar cada segundo hasta encontrar el editor
+  // 5. Gestión del Historial (Undo/Redo)
+  function gestionarHistorial(cm) {
+    const storageKey = getSCStorageKey();
+
+    // Restaurar
+    const savedHistory = sessionStorage.getItem(storageKey);
+    if (savedHistory) {
+      try {
+        cm.setHistory(JSON.parse(savedHistory));
+        console.log("🔄 Historial recuperado.");
+      } catch (e) {
+        console.warn("Error restaurando historial", e);
+      }
+    }
+
+    // Guardar en cambios
+    cm.on("change", () => {
+      clearTimeout(window.saveHistTimeout);
+      window.saveHistTimeout = setTimeout(() => {
+        sessionStorage.setItem(storageKey, JSON.stringify(cm.getHistory()));
+      }, 1000);
+    });
+
+    // Guardado preventivo Ctrl+S
+    window.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        sessionStorage.setItem(storageKey, JSON.stringify(cm.getHistory()));
+      }
+    });
+  }
+
+  // 6. Aplicación de Configuración al Editor
+  function aplicarConfiguracion() {
+    if (typeof editor === "undefined" || !editor.setOption) return;
+
+    // Definición de Modos Especiales
+    CodeMirror.defineMode("php-heredoc", function (config) {
+      return CodeMirror.multiplexingMode(
+        CodeMirror.getMode(config, { name: "php", startOpen: true }),
+        {
+          open: "<<<HTML",
+          close: "HTML;",
+          mode: CodeMirror.getMode(config, "text/html"),
+          delimStyle: "keyword",
+        },
+      );
+    });
+
+    const tagOverlay = {
+      token: function (stream) {
+        if (
+          stream.match(
+            /^@(param|return|var|author|since|throws|category|package|copyright|license|version|link|deprecated|see)/,
+          )
+        ) {
+          return "phpdoc-tag";
+        }
+        while (
+          stream.next() != null &&
+          !stream.match(
+            /^@(?=param|return|var|author|since|throws|category|package|copyright|license|version|link|deprecated|see)/,
+            false,
+          )
+        ) {}
+        return null;
+      },
+    };
+
+    // Set Options
+    editor.setOption("mode", "php-heredoc");
+    editor.addOverlay(tagOverlay);
+    editor.setOption("continueComments", true);
+    editor.setOption("autoCloseBrackets", true);
+    editor.setOption("matchBrackets", true);
+    editor.setOption("highlightSelectionMatches", {
+      showToken: /\w/,
+      annotateScrollbar: true,
+    });
+    editor.setOption("autoCloseTags", true);
+    editor.setOption("matchTags", { bothTags: true });
+    editor.setOption("tabSize", 4);
+    editor.setOption("indentUnit", 4);
+    editor.setOption("indentWithTabs", false);
+
+    // Keymaps
+    editor.addKeyMap({
+      "Shift-Alt-G": (cm) => formatCode(cm),
+      Enter: "newlineAndIndentContinueComment",
+      "Ctrl-Alt-Space": (cm) => showSnippetHints(cm),
+    });
+
+    // Inicializar Historial
+    gestionarHistorial(editor);
+
+    setTimeout(() => editor.refresh(), 250);
+    console.log("🎨 UX Boost V2: Plugins activados.");
+  }
+
+  // --- EJECUCIÓN ---
+  inyectarEstilos();
+  cargarSnippetsDesdeGithub();
+
   let checkCount = 0;
   const interval = setInterval(() => {
     if (typeof editor !== "undefined") {
       aplicarConfiguracion();
       clearInterval(interval);
     }
-    if (checkCount++ > 15) clearInterval(interval); // Timeout tras 15 seg
+    if (checkCount++ > 15) clearInterval(interval);
   }, 1000);
-
-  // --- LÓGICA DE HISTORIAL ---
-  // 1. Restaurar historial guardado al iniciar
-  const storageKey = "sc_hist_" + window.location.pathname;
-  const savedHistory = sessionStorage.getItem(storageKey);
-  if (savedHistory) {
-    try {
-      editor.setHistory(JSON.parse(savedHistory));
-      console.log("🔄 Historial recuperado.");
-    } catch (e) {
-      console.warn("Error restaurando historial", e);
-    }
-  }
-
-  // 2. Guardar historial automáticamente en cada cambio
-  editor.on("change", () => {
-    clearTimeout(window.saveHistTimeout);
-    window.saveHistTimeout = setTimeout(() => {
-      sessionStorage.setItem(storageKey, JSON.stringify(editor.getHistory()));
-    }, 1000);
-  });
-
-  cargarSnippetsDesdeGithub();
-  // 3. Guardado extra preventivo con Ctrl+S
-  window.addEventListener("keydown", function (e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-      sessionStorage.setItem(storageKey, JSON.stringify(editor.getHistory()));
-    }
-  });
-  // ---------------------------
 })();
