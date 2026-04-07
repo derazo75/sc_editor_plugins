@@ -21,8 +21,8 @@ Asegurate de que los scripts de usuario están activados en tempermonkey
 * **Highlight de Selección**: Al seleccionar una variable o palabra, se resaltan automáticamente todas sus ocurrencias en el archivo actual.
 
 ### Edición Inteligente
-* **Auto-Cierre**: Cierre automático de paréntesis, llaves, corchetes y etiquetas HTML.
-* **Multiplexor Heredoc**: Resaltado de sintaxis HTML real cuando trabajas dentro de bloques `<<<HTML ... HTML;`.
+* **Auto-Cierre**: Cierre automático de paréntesis, llaves y corchetes.
+* **Multiplexor HTML **: Resaltado de apertura y cierre de tags cuando trabajas fuera de php ?>.
 * **PHP Documentor**: Resaltado especial para etiquetas de documentación como `@param`, `@return`, `@var`, entre otras, dentro de comentarios.
 * **Continuación de Comentarios**: Al presionar `Enter` dentro de un comentario de bloque, se inserta automáticamente el asterisco en la nueva línea.
 
