@@ -9,6 +9,7 @@ Este Script de Usuario (Tampermonkey) transforma el editor nativo de **Scriptcas
 3. **Pegar Código**: Borra el contenido inicial y pega el código de `codeMirror_pluginsV0.1.js` que se encuentra en este repositorio.
 4. **Guardar**: Presiona `Ctrl + S` dentro del editor de Tampermonkey.
 5. **Configurar Snippets**: Asegúrate de tener tu archivo `snippets.json` en la rama `main` de tu repositorio para la carga remota.
+Asegurate de que los scripts de usuario están activados en tempermonkey
 
 ---
 
