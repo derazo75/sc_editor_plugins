@@ -9,16 +9,9 @@
 // @match        *://localhost:8000/*
 // @match        *://*/scriptcase/devel/*
 
-// @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js
-// @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js
-// @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js
-// @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js
-// @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/php/php.min.js
-
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/match-highlighter.min.js
-// @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchtags.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/mode/multiplex.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/comment/continuecomment.min.js
@@ -94,29 +87,33 @@
 
   // 4. Lógica de Autocompletado (Snippets)
   function showSnippetHints(cm) {
+    const cursor = cm.getCursor();
+    const token = cm.getTokenAt(cursor);
+
+    // Si el token es un operador o espacio, forzamos una búsqueda vacía para mostrar todo
+    const isInvalidToken = /[^a-zA-Z0-9_]/.test(token.string);
+    const currentWord = isInvalidToken ? "" : token.string.toLowerCase();
+
+    const filteredKeys = Object.keys(SNIPPETS).filter(
+      (key) => key.toLowerCase().includes(currentWord) || currentWord === "",
+    );
+
+    if (filteredKeys.length === 0) return;
+
     cm.showHint({
       hint: function () {
-        const cursor = cm.getCursor();
-        const token = cm.getTokenAt(cursor);
-        const currentWord = token.string.toLowerCase();
-
-        const filteredKeys = Object.keys(SNIPPETS).filter(
-          (key) =>
-            key.toLowerCase().includes(currentWord) || currentWord === "",
-        );
-
         const listaHints = filteredKeys.map((key) => {
           const fullText = SNIPPETS[key].replace("$0", "");
-          const previewText = fullText.replace(/\s+/g, " ").substring(0, 80);
+          const previewText = fullText.replace(/\s+/g, " ").substring(0, 60);
           return {
             text: fullText,
             displayText: key,
             render: (el, self, data) => {
               const container = document.createElement("div");
               container.style =
-                "display: flex; align-items: center; white-space: nowrap;";
-              container.innerHTML = `<span style="font-weight:bold; color:#000;">📝 ${data.displayText}:</span>
-                                                   <span style="color:#666; font-style:italic; margin-left:8px;">${previewText}${fullText.length > 80 ? "..." : ""}</span>`;
+                "display: flex; justify-content: space-between; width: 100%; min-width: 300px;";
+              container.innerHTML = `<span><strong>📝 ${data.displayText}</strong></span>
+                                     <span style="color:#888; font-size: 0.9em; margin-left: 15px;">${previewText}...</span>`;
               el.appendChild(container);
             },
           };
@@ -124,8 +121,11 @@
 
         return {
           list: listaHints,
-          from: CodeMirror.Pos(cursor.line, token.start),
-          to: CodeMirror.Pos(cursor.line, cursor.ch),
+          // Si el token era inválido (espacio/punto), empezamos el reemplazo en la posición del cursor
+          from: isInvalidToken
+            ? cursor
+            : CodeMirror.Pos(cursor.line, token.start),
+          to: cursor,
         };
       },
       completeSingle: false,
@@ -170,6 +170,7 @@
     if (typeof editor === "undefined" || !editor.setOption) return;
 
     // Definición de Modos Especiales
+
     CodeMirror.defineMode("php-heredoc", function (config) {
       return CodeMirror.multiplexingMode(
         CodeMirror.getMode(config, { name: "php", startOpen: true }),
@@ -203,17 +204,16 @@
     };
 
     // Set Options
-    editor.setOption("mode", "php-heredoc");
+    //editor.setOption("mode", "php-heredoc");
     editor.addOverlay(tagOverlay);
     editor.setOption("continueComments", true);
     editor.setOption("autoCloseBrackets", true);
     editor.setOption("matchBrackets", true);
+    editor.setOption("matchTags", { bothTags: true });
     editor.setOption("highlightSelectionMatches", {
       showToken: /\w/,
       annotateScrollbar: true,
     });
-    editor.setOption("autoCloseTags", true);
-    editor.setOption("matchTags", { bothTags: true });
     editor.setOption("tabSize", 4);
     editor.setOption("indentUnit", 4);
     editor.setOption("indentWithTabs", false);
