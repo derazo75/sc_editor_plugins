@@ -6,7 +6,7 @@ Este Script de Usuario (Tampermonkey) transforma el editor nativo de **Scriptcas
 
 1. **Instalar Tampermonkey**: Descarga la extensión para [Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) u otro navegador basado en Chromium.
 2. **Crear Nuevo Script**: Abre el panel de control de Tampermonkey, haz clic en el botón **"+" (Añadir nuevo script)**.
-3. **Pegar Código**: Borra el contenido inicial y pega el código de `codeMirror_pluginsV0.1.js` que se encuentra en este repositorio.
+3. **Pegar Código**: Borra el contenido inicial y pega el código de `scriptcase-hack-editor.js` que se encuentra en este repositorio.
 4. **Guardar**: Presiona `Ctrl + S` dentro del editor de Tampermonkey.
 5. **Configurar Snippets**: Asegúrate de tener tu archivo `snippets.json` en la rama `main` de tu repositorio para la carga remota.
 Asegurate de que los scripts de usuario están activados en tempermonkey
