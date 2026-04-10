@@ -551,12 +551,18 @@ def ask_ai():
         )
 
         respuesta = chat_completion.choices[0].message.content
-
-        respuesta_limpia = re.sub(r"^<\?php", "", respuesta, flags=re.IGNORECASE | re.MULTILINE)
-        respuesta_limpia = re.sub(r"\?>$", "", respuesta_limpia, flags=re.MULTILINE)
-
-        # 3. Trim final para evitar espacios en blanco en el editor
-        respuesta_limpia = respuesta_limpia.strip()        # 3. Trim final
+        respuesta = chat_completion.choices[0].message.content
+        respuesta_limpia = respuesta
+        # Quitar ```php o ``` al inicio
+        respuesta_limpia = re.sub(r"^\s*```(?:php)?\s*", "", respuesta_limpia, flags=re.IGNORECASE)
+        # Quitar ``` al final
+        respuesta_limpia = re.sub(r"\s*```\s*$", "", respuesta_limpia)
+        # Quitar <?php al inicio
+        respuesta_limpia = re.sub(r"^\s*<\?php\s*", "", respuesta_limpia, flags=re.IGNORECASE)
+        # Quitar ?> al final
+        respuesta_limpia = re.sub(r"\s*\?>\s*$", "", respuesta_limpia)
+        # Trim final
+        respuesta_limpia = respuesta_limpia.strip()
 
         print("✅ RESPUESTA RECIBIDA Y LIMPIADA")
 
