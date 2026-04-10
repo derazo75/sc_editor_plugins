@@ -58,6 +58,7 @@ Usa `Alt + Shift + K` para procesar instrucciones mediante comentarios:
 | `Shift + Alt + G` | **Smart Re-indent**: Re-indenta visualmente todo el código del editor. | |
 | `Ctrl + Alt + Space`| **Snippets**: Abre el buscador dinámico de fragmentos de código. | |
 | `Alt + Shift + A` | **Internal Libs**: Sugiere funciones y métodos de librerías de Scriptcase. | SERVIDOR PYTHON |
+| instancia-> o clase:: | **Clases**: Sugiere funciones y métodos de clases e instancias. | SERVIDOR PYTHON |
 
 ---
 
