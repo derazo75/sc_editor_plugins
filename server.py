@@ -552,16 +552,11 @@ def ask_ai():
 
         respuesta = chat_completion.choices[0].message.content
 
-        # --- LIMPIEZA DE RESPUESTA ---
-        # 1. Quitar bloques markdown
-        respuesta_limpia = re.sub(r"```[a-zA-Z]*\s*", "", respuesta)
-        respuesta_limpia = respuesta_limpia.replace("```", "")
-        # 2. Quitar etiquetas PHP que ensucian el editor de Scriptcase
-        respuesta_limpia = re.sub(r"<\?php", "", respuesta_limpia, flags=re.IGNORECASE)
-        respuesta_limpia = re.sub(r"\?>", "", respuesta_limpia)
+        respuesta_limpia = re.sub(r"^<\?php", "", respuesta, flags=re.IGNORECASE | re.MULTILINE)
+        respuesta_limpia = re.sub(r"\?>$", "", respuesta_limpia, flags=re.MULTILINE)
 
-        # 3. Trim final
-        respuesta_limpia = respuesta_limpia.strip()
+        # 3. Trim final para evitar espacios en blanco en el editor
+        respuesta_limpia = respuesta_limpia.strip()        # 3. Trim final
 
         print("✅ RESPUESTA RECIBIDA Y LIMPIADA")
 
