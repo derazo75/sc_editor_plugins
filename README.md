@@ -61,4 +61,19 @@ Usa `Alt + Shift + K` para procesar instrucciones mediante comentarios:
 
 ---
 
+El servidor Python requiere los siguientes parámetros para operar las funciones avanzadas:
+
+DIR_TEMP: el directorio de trabajo de php-fixer (formateador externo)
+PHP_PATH: localizacion del binario de php
+PHP_FIXER_PATH: ejecutable de php-fixer
+
+
+```json
+{
+  "DIR_TEMP": "/tmp/sc_fixer",
+  "PHP_PATH": "/usr/bin/php",
+  "PHP_FIXER_PATH": "/ruta/a/php-cs-fixer",
+  "GROQ_API_KEY": "tu_api_key_aqui",
+}
+
 
