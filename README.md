@@ -61,12 +61,11 @@ Usa `Alt + Shift + K` para procesar instrucciones mediante comentarios:
 
 ---
 
-El servidor Python requiere los siguientes parámetros para operar las funciones avanzadas:
+## El servidor Python requiere los siguientes parámetros para operar las funciones avanzadas:
 
-DIR_TEMP: el directorio de trabajo de php-fixer (formateador externo)
-PHP_PATH: localizacion del binario de php
-PHP_FIXER_PATH: ejecutable de php-fixer
-
+* DIR_TEMP: el directorio de trabajo de php-fixer (formateador externo)
+* PHP_PATH: localizacion del binario de php
+* PHP_FIXER_PATH: ejecutable de php-fixer
 
 ```json
 {
