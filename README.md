@@ -11,7 +11,7 @@ Este Script de Usuario (Tampermonkey) agrega al editor nativo de **Scriptcase** 
 3.  **Crear Nuevo Script**: En el panel de control de Tampermonkey, haz clic en el botón **"+" (Añadir nuevo script)**.
 4.  **Pegar Código**: Borra el contenido inicial y pega el código de `scriptcase-hack-editor.js`.
 5.  **Configurar Snippets**: El script busca un archivo `snippets.json` remoto. Asegúrate de configurar la URL de tu repositorio.
-6.  **Levantar Backend**: Ejecuta el servidor Python (`editor_sc_v0.2.py`) para habilitar IA, Linter y Formateo.
+6.  **Levantar Backend**: Ejecuta el servidor Python (`editor_sc_v0.2.py`) para habilitar IA, Linter y Formateo (No es necesario para las demás características).
 
 ---
 
