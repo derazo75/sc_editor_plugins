@@ -52,12 +52,12 @@ Usa `Alt + Shift + K` para procesar instrucciones mediante comentarios:
 
 | Combinación | Acción |
 | :--- | :--- |
-| `Alt + Shift + K` | **IA Magic**: Ejecuta la tarea del comentario o procesa el código seleccionado. |
-| `Alt + Shift + F` | **Auto-Format**: Limpia y formatea el código (requiere backend). |
-| `Alt + Shift + S` | **Check Syntax**: Ejecuta el linter para buscar errores. |
+| `Alt + Shift + K` | **IA Magic**: Ejecuta la tarea del comentario o procesa el código seleccionado. (SERVIDOR PYTHON) |
+| `Alt + Shift + F` | **Auto-Format**: Limpia y formatea el código (requiere backend). (SERVIDOR PYTHON)|
+| `Alt + Shift + S` | **Check Syntax**: Ejecuta el linter para buscar errores. (SERVIDOR PYTHON)|
 | `Shift + Alt + G` | **Smart Re-indent**: Re-indenta visualmente todo el código del editor. |
 | `Ctrl + Alt + Space`| **Snippets**: Abre el buscador dinámico de fragmentos de código. |
-| `Alt + Shift + A` | **Internal Libs**: Sugiere funciones y métodos de librerías de Scriptcase. |
+| `Alt + Shift + A` | **Internal Libs**: Sugiere funciones y métodos de librerías de Scriptcase. (SERVIDOR PYTHON)|
 
 ---
 
