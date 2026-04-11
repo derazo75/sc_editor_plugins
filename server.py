@@ -45,8 +45,6 @@ if config:
     GROG_EFFORT_SC = config.get("GROQ_EFFORT_SC")
     SYSTEM_PROMPT = config.get("SYSTEM_PROMPT")
     SYSTEM_PROMPT_SC = config.get("SYSTEM_PROMPT_SC")
-    REFUERZO_DINAMICO = config.get("REFUERZO_DINAMICO")
-    REFUERZO_DINAMICO_SC = config.get("REFUERZO_DINAMICO_SC")
 
 CACHE_SUGERENCIAS_CLASES = {}  # Diccionario: { 'NombreClase': [metodos, ...] }
 CACHE_FUNCIONES_GLOBALES = []  # Lista simple
@@ -508,31 +506,25 @@ def ask_ai():
         # Verificamos los prefijos y limpiamos la cadena
         if tarea_raw.startswith("//SC"):
             current_system_prompt = SYSTEM_PROMPT_SC
-            refuerzo_config = REFUERZO_DINAMICO_SC
             esfuerzo_razonamiento = GROG_EFFORT_SC
             # Borramos el prefijo //SC y limpiamos espacios sobrantes
             tarea = re.sub(r"^//SC", "", tarea_raw).strip()
         else:
             tarea = re.sub(r"^//", "", tarea_raw).strip()
             current_system_prompt = SYSTEM_PROMPT
-            refuerzo_config = REFUERZO_DINAMICO
             esfuerzo_razonamiento = GROG_EFFORT
 
         if not str(codigo_usuario).strip() and not str(tarea).strip():
             return jsonify({"code": "", "status": "error", "message": "Datos vacíos."})
-        # IMPORTANTE: El refuerzo va al FINAL del mensaje para máxima atención del modelo
         user_content = (
             f"CONTEXTO DEL CÓDIGO:\n{codigo_usuario}\n\nTAREA SOLICITADA:\n{tarea}"
         )
-        user_content += f"{refuerzo_config}"
 
         # --- DEBUG PRINT: Verificamos qué se está enviando ---
         print("\n" + "!" * 60)
-        print("🔥 ENVIANDO PETICIÓN CON REFUERZO DINÁMICO")
+        print("🔥 ENVIANDO PETICIÓN ")
         print("!" * 60)
         print(f"Tarea: {tarea}")
-        if "INSTRUCCIÓN TÉCNICA OBLIGATORIA" in user_content:
-            print(f"Refuerzo aplicado: {refuerzo_config}")
         print("!" * 60 + "\n")
 
         chat_completion = client.chat.completions.create(
@@ -550,7 +542,6 @@ def ask_ai():
             frequency_penalty=0,
         )
 
-        respuesta = chat_completion.choices[0].message.content
         respuesta = chat_completion.choices[0].message.content
         respuesta_limpia = respuesta
         # Quitar ```php o ``` al inicio
