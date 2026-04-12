@@ -509,10 +509,12 @@ def ask_ai():
             esfuerzo_razonamiento = GROG_EFFORT_SC
             # Borramos el prefijo //SC y limpiamos espacios sobrantes
             tarea = re.sub(r"^//SC", "", tarea_raw).strip()
+            is_sc = True
         else:
             tarea = re.sub(r"^//", "", tarea_raw).strip()
             current_system_prompt = SYSTEM_PROMPT
             esfuerzo_razonamiento = GROG_EFFORT
+            is_sc = False
 
         if not str(codigo_usuario).strip() and not str(tarea).strip():
             return jsonify({"code": "", "status": "error", "message": "Datos vacíos."})
@@ -538,18 +540,23 @@ def ask_ai():
             max_tokens=4096,
             top_p=1,
             stream=False,
-            presence_penalty=0,
-            frequency_penalty=0,
+            tools=[{"type": "browser_search"}]
+            if is_sc
+            else None,  # Solo buscar si es Scriptcase,
         )
 
         respuesta = chat_completion.choices[0].message.content
         respuesta_limpia = respuesta
         # Quitar ```php o ``` al inicio
-        respuesta_limpia = re.sub(r"^\s*```(?:php)?\s*", "", respuesta_limpia, flags=re.IGNORECASE)
+        respuesta_limpia = re.sub(
+            r"^\s*```(?:php)?\s*", "", respuesta_limpia, flags=re.IGNORECASE
+        )
         # Quitar ``` al final
         respuesta_limpia = re.sub(r"\s*```\s*$", "", respuesta_limpia)
         # Quitar <?php al inicio
-        respuesta_limpia = re.sub(r"^\s*<\?php\s*", "", respuesta_limpia, flags=re.IGNORECASE)
+        respuesta_limpia = re.sub(
+            r"^\s*<\?php\s*", "", respuesta_limpia, flags=re.IGNORECASE
+        )
         # Quitar ?> al final
         respuesta_limpia = re.sub(r"\s*\?>\s*$", "", respuesta_limpia)
         # Trim final
