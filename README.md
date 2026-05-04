@@ -12,7 +12,7 @@ Este Script de Usuario (Tampermonkey) agrega al editor nativo de **Scriptcase** 
 4.  **Pegar Código**: Borra el contenido inicial y pega el código de `scriptcase-hack-editor.js`.
 5.  **Configurar Snippets**: El script busca un archivo `snippets.json` remoto. Asegúrate de configurar la URL de tu repositorio.
 6.  **Levantar Backend**: Ejecuta el servidor Python (`editor_sc_v0.2.py`) para habilitar IA y Linter (No es necesario para las demás características).
-7.  **apiKey GROQ:** en la linea 32 de scriptcase-hack.js coloque su APIKEY de GROQ (https://groq.com/)
+7.  **apiKey GROQ:** en la linea 33 de scriptcase-hack.js coloque su APIKEY de GROQ (https://groq.com/)
 
 ---
 
