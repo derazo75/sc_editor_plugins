@@ -6,6 +6,8 @@
 // @author       Fernando Erazo
 // @match        *://*/scriptcase/devel/iface/event.php*
 // @match        *://*/scriptcase/devel/compat/nm_edit_php_edit.php*
+// @match        *://*/scriptcase/devel/iface/methods.php*
+
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @connect      raw.githubusercontent.com
@@ -22,9 +24,7 @@
 // @require      https://cdn.jsdelivr.net/npm/prettier@2.8.8/standalone.js
 // @require      https://cdn.jsdelivr.net/npm/@prettier/plugin-php@0.19.6/standalone.js
 // @require      https://cdn.jsdelivr.net/npm/prettier@2.8.8/parser-html.js
-
 // ==/UserScript==
-
 (function () {
   "use strict";
 
