@@ -6,7 +6,6 @@ import tempfile
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from groq import Groq
 
 app = Flask(__name__)
 # CORS configurado para permitir peticiones desde cualquier origen (Scriptcase)
@@ -33,35 +32,11 @@ def cargar_configuracion(archivo="config.json"):
 config = cargar_configuracion()
 
 if config:
-    DIR_TEMP = config.get("DIR_TEMP")
     PHP_PATH = config.get("PHP_PATH")
-    PHP_FIXER_PATH = config.get("PHP_FIXER_PATH")
     RUTAS_LIBS = config.get("RUTAS_LIBS", [])  # Retorna lista vacía si no existe
-    GROQ_API_KEY = config.get(
-        "GROQ_API_KEY"
-    )  # "openai/gpt-oss-120b",  "llama-3.3-70b-versatile",
-    GROQ_MODEL = config.get("GROQ_MODEL")
-    GROG_EFFORT = config.get("GROQ_EFFORT")
-    GROG_EFFORT_SC = config.get("GROQ_EFFORT_SC")
-    SYSTEM_PROMPT = config.get("SYSTEM_PROMPT")
-    SYSTEM_PROMPT_SC = config.get("SYSTEM_PROMPT_SC")
 
 CACHE_SUGERENCIAS_CLASES = {}  # Diccionario: { 'NombreClase': [metodos, ...] }
 CACHE_FUNCIONES_GLOBALES = []  # Lista simple
-
-if not GROQ_API_KEY:
-    print("⚠️ ADVERTENCIA: GROQ_API_KEY está vacía en config.json.")
-    print(
-        "La funcionalidad de IA (/ask) no funcionará hasta que agregues una llave válida."
-    )
-    client = None
-else:
-    # Inicializar cliente de Groq solo si hay llave
-    try:
-        client = Groq(api_key=config["GROQ_API_KEY"])
-    except Exception as e:
-        print(f"ERROR al inicializar Groq: {e}")
-        client = None
 
 
 # Instrucciones del "Experto en Scriptcase" (Copiando la lógica del GPT)
@@ -155,34 +130,6 @@ def extraer_funciones_globales():
     # Guardamos en la variable global
     CACHE_FUNCIONES_GLOBALES = res
     return res
-
-
-def reemplazar_macros_por_dump(match):
-    nombre_macro = match.group(1)
-    texto_desde_macro = match.string[match.start() :]
-
-    inicio_parentesis = texto_desde_macro.find("(")
-    if inicio_parentesis == -1:
-        return match.group(0)
-
-    # Lógica de balanceo para encontrar el cierre exacto de la macro
-    balance = 0
-    pos_cierre = -1
-    for i in range(inicio_parentesis, len(texto_desde_macro)):
-        if texto_desde_macro[i] == "(":
-            balance += 1
-        elif texto_desde_macro[i] == ")":
-            balance -= 1
-            if balance == 0:
-                pos_cierre = i
-                break
-
-    if pos_cierre == -1:
-        return match.group(0)
-
-    # Retornamos la variable genérica y marcamos qué parte del texto original "consumir"
-    # El regex de abajo se encargará de sustituir todo este bloque
-    return "$dump"
 
 
 # 1. Regex que identifica el inicio de la macro
@@ -350,231 +297,8 @@ def lint_code():
             os.remove(temp_path)
 
 
-@app.route("/format", methods=["POST"])
-def format_code():
-    data = request.get_json(force=True)
-    codigo_original = data.get("code", "")
-
-    if not codigo_original:
-        return jsonify({"code": "", "status": "success"})
-
-    # Diccionario para guardar lo que vamos a extraer
-    almacen_temporal = {}
-    contador = 0
-
-    def guardar_en_almacen(contenido):
-        nonlocal contador
-        key = f"SC_VAR_TEMP_{contador}_SC"
-        almacen_temporal[key] = contenido
-        contador += 1
-        return f"${key}"
-
-    # --- PASO 1: EXTRACCIÓN Y PROTECCIÓN ---
-
-    # A. Extraer Macros sc_... (usando lógica de balanceo de paréntesis)
-    def extraer_macros(texto):
-        while True:
-            match = re.search(r"(sc_[a-zA-Z0-9_]+\s*)\(", texto)
-            if not match:
-                break
-
-            inicio_macro = match.start()
-            balance = 0
-            fin_macro = -1
-
-            for i in range(
-                inicio_macro
-                + match.group(1).count("(")
-                + len(nombre_macro if "nombre_macro" in locals() else ""),
-                len(texto),
-            ):
-                # Buscamos el paréntesis de apertura real
-                actual = texto[i]
-                if actual == "(":
-                    balance += 1
-                elif actual == ")":
-                    balance -= 1
-                    if balance == 0:
-                        fin_macro = i
-                        break
-
-            if fin_macro != -1:
-                # Extraemos la macro completa: sc_algo(...)
-                macro_completa = texto[inicio_macro : fin_macro + 1]
-                # Si termina en punto y coma en el original, lo incluimos para que el fixer no se líe
-                placeholder = guardar_en_almacen(macro_completa)
-                texto = texto[:inicio_macro] + placeholder + texto[fin_macro + 1 :]
-            else:
-                break
-        return texto
-
-    # B. Extraer Campos {campo} y {array['idx']}
-    def extraer_campos(texto):
-        # Patrón que soporta {rs[0]['val']}
-        patron = r"(?<!\$)\{([^\s{}][^{}]*[^\s{}])\}|(?<!\$)\{([^\s{}])\}"
-
-        def replace_f(m):
-            return guardar_en_almacen(m.group(0))
-
-        return re.sub(patron, replace_f, texto)
-
-    # C. Extraer Globales [global]
-    def extraer_globales(texto):
-        patron = r"(?<!\$)\[[a-zA-Z0-9_]+\]"
-        return re.sub(patron, lambda m: guardar_en_almacen(m.group(0)), texto)
-
-    # Aplicamos extracciones en orden
-    temp_code = extraer_macros(codigo_original)
-    temp_code = extraer_campos(temp_code)
-    temp_code = extraer_globales(temp_code)
-
-    # --- PASO 2: FORMATEO ---
-    work_dir = DIR_TEMP
-    if not os.path.exists(work_dir):
-        os.makedirs(work_dir)
-
-    path_codigo = os.path.join(work_dir, "trabajo.php")
-    path_config = os.path.join(work_dir, "reglas.php")
-
-    tiene_tag_php = temp_code.lstrip().startswith("<?")
-    with open(path_codigo, "w") as f:
-        f.write(temp_code if tiene_tag_php else f"<?php\n{temp_code}")
-
-    # Configuración de reglas (ajustada a tus preferencias)
-    config_content = """<?php
-    return (new PhpCsFixer\\Config())
-        ->setRules([
-            '@PSR12' => true,
-            'binary_operator_spaces' => ['default' => 'align_single_space_minimal'],
-            'no_singleline_whitespace_before_semicolons' => true,
-            'braces_position' => [
-                'functions_opening_brace' => 'same_line',
-                'classes_opening_brace' => 'same_line',
-                'control_structures_opening_brace' => 'same_line',
-            ],
-            'no_extra_blank_lines' => ['tokens' => ['extra', 'throw', 'use', 'break', 'continue']],
-        ])
-        ->setIndent("    ")
-        ->setUsingCache(false);
-    """
-    with open(path_config, "w") as f:
-        f.write(config_content)
-
-    try:
-        subprocess.run(
-            [PHP_FIXER_PATH, "fix", path_codigo, "--config=" + path_config, "--quiet"],
-            check=False,
-        )
-
-        with open(path_codigo, "r") as f:
-            code_fmt = f.read()
-
-        # --- PASO 3: RESTAURACIÓN ---
-        # Orden inverso: buscamos $SC_VAR_TEMP_..._SC y lo reemplazamos por su valor original
-        for key in reversed(list(almacen_temporal.keys())):
-            # Reemplazamos la variable PHP por el texto original guardado
-            # Usamos replace directo para evitar problemas con caracteres especiales en regex
-            code_fmt = code_fmt.replace(f"${key}", almacen_temporal[key])
-
-        # Limpieza final del tag PHP
-        if not tiene_tag_php:
-            code_fmt = re.sub(
-                r"^<\?php\s*", "", code_fmt, count=1, flags=re.IGNORECASE
-            ).lstrip()
-
-        return jsonify({"code": code_fmt, "status": "success"})
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-
-
-@app.route("/ask", methods=["POST"])
-def ask_ai():
-    if client is None:
-        return jsonify(
-            {"status": "error", "message": "GROQ_API_KEY no configurada."}
-        ), 500
-
-    try:
-        data = request.get_json(force=True)
-        codigo_usuario = data.get("code", data.get("context", ""))
-        # tarea = data.get("task", data.get("question", data.get("prompt", "")))
-        tarea_raw = data.get(
-            "task", data.get("question", data.get("prompt", ""))
-        ).strip()
-
-        # Verificamos los prefijos y limpiamos la cadena
-        if tarea_raw.startswith("//SC"):
-            current_system_prompt = SYSTEM_PROMPT_SC
-            esfuerzo_razonamiento = GROG_EFFORT_SC
-            # Borramos el prefijo //SC y limpiamos espacios sobrantes
-            tarea = re.sub(r"^//SC", "", tarea_raw).strip()
-            is_sc = True
-        else:
-            tarea = re.sub(r"^//", "", tarea_raw).strip()
-            current_system_prompt = SYSTEM_PROMPT
-            esfuerzo_razonamiento = GROG_EFFORT
-            is_sc = False
-
-        if not str(codigo_usuario).strip() and not str(tarea).strip():
-            return jsonify({"code": "", "status": "error", "message": "Datos vacíos."})
-        user_content = (
-            f"CONTEXTO DEL CÓDIGO:\n{codigo_usuario}\n\nTAREA SOLICITADA:\n{tarea}"
-        )
-
-        # --- DEBUG PRINT: Verificamos qué se está enviando ---
-        print("\n" + "!" * 60)
-        print("🔥 ENVIANDO PETICIÓN ")
-        print("!" * 60)
-        print(f"Tarea: {tarea}")
-        print("!" * 60 + "\n")
-
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": current_system_prompt},
-                {"role": "user", "content": user_content},
-            ],
-            model=GROQ_MODEL,
-            temperature=0.0,  # Temperatura 0 para evitar alucinaciones sintácticas
-            reasoning_effort=esfuerzo_razonamiento,
-            max_tokens=4096,
-            top_p=1,
-            stream=False,
-            tools=[{"type": "browser_search"}]
-            if is_sc
-            else None,  # Solo buscar si es Scriptcase,
-        )
-
-        respuesta = chat_completion.choices[0].message.content
-        respuesta_limpia = respuesta
-        # Quitar ```php o ``` al inicio
-        respuesta_limpia = re.sub(
-            r"^\s*```(?:php)?\s*", "", respuesta_limpia, flags=re.IGNORECASE
-        )
-        # Quitar ``` al final
-        respuesta_limpia = re.sub(r"\s*```\s*$", "", respuesta_limpia)
-        # Quitar <?php al inicio
-        respuesta_limpia = re.sub(
-            r"^\s*<\?php\s*", "", respuesta_limpia, flags=re.IGNORECASE
-        )
-        # Quitar ?> al final
-        respuesta_limpia = re.sub(r"\s*\?>\s*$", "", respuesta_limpia)
-        # Trim final
-        respuesta_limpia = respuesta_limpia.strip()
-
-        print("✅ RESPUESTA RECIBIDA Y LIMPIADA")
-
-        return jsonify({"code": respuesta_limpia, "status": "success"})
-
-    except Exception as e:
-        import traceback
-
-        print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)})
-
-
 if __name__ == "__main__":
     if not os.path.exists(PHP_PATH):
         print(f"⚠️ ADVERTENCIA: No se encontró PHP en {PHP_PATH}")
-    print("🚀 Servidor IA Experimental, LINTER, FIXER en http://localhost:5005")
+    print("Servidor IA Experimental, LINTER, FIXER en http://localhost:5005")
     app.run(port=5005, debug=True)
