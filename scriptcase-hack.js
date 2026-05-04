@@ -24,10 +24,10 @@
 // @require      https://cdn.jsdelivr.net/npm/prettier@2.8.8/standalone.js
 // @require      https://cdn.jsdelivr.net/npm/@prettier/plugin-php@0.19.6/standalone.js
 // @require      https://cdn.jsdelivr.net/npm/prettier@2.8.8/parser-html.js
+
 // ==/UserScript==
 (function () {
   "use strict";
-
   // Variables de configuración (puedes moverlas al inicio de tu script)
   const CONFIG_GROQ = {
     apiKey: "tu_api_key", // Cambia esto por tu clave real
