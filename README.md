@@ -11,7 +11,7 @@ Este Script de Usuario (Tampermonkey) agrega al editor nativo de **Scriptcase** 
 3.  **Crear Nuevo Script**: En el panel de control de Tampermonkey, haz clic en el botón **"+" (Añadir nuevo script)**.
 4.  **Pegar Código**: Borra el contenido inicial y pega el código de `scriptcase-hack-editor.js`.
 5.  **Configurar Snippets**: El script busca un archivo `snippets.json` remoto. Asegúrate de configurar la URL de tu repositorio.
-6.  **Levantar Backend**: Ejecuta el servidor Python (`editor_sc_v0.2.py`) para habilitar IA, Linter y Formateo (No es necesario para las demás características).
+6.  **Levantar Backend**: Ejecuta el servidor Python (`editor_sc_v0.2.py`) para habilitar IA y Linter (No es necesario para las demás características).
 
 ---
 
@@ -43,7 +43,6 @@ Usa `Alt + Shift + K` para procesar instrucciones mediante comentarios:
 
 ### 🔧 Herramientas del Servidor (Backend)
 * **Linter (Alt + Shift + S)**: Validación de sintaxis en tiempo real usando el binario de PHP local.
-* **Auto-Format (Alt + Shift + F)**: Formateo profesional basado en estándares PSR con `php-cs-fixer`.
 * **IntelliSense**: Autocompletado inteligente al detectar operadores `->` o `::` y acceso a funciones de librerías internas (`Alt + Shift + A`).
 
 ---
@@ -53,9 +52,8 @@ Usa `Alt + Shift + K` para procesar instrucciones mediante comentarios:
 | Combinación | Acción | Requerimiento |
 | :--- | :--- | :--- |
 | `Alt + Shift + K` | **IA Magic**: Ejecuta la tarea del comentario o procesa el código seleccionado. | SERVIDOR PYTHON |
-| `Alt + Shift + F` | **Auto-Format**: Limpia y formatea el código. | SERVIDOR PYTHON|
 | `Alt + Shift + S` | **Check Syntax**: Ejecuta el linter para buscar errores. | SERVIDOR PYTHON |
-| `Shift + Alt + G` | **Smart Re-indent**: Re-indenta visualmente todo el código del editor. | |
+| `Shift + Alt + F` | **Prettier PHP Plugin**: Re-indenta visualmente todo el código del editor. | |
 | `Ctrl + Alt + Space`| **Snippets**: Abre el buscador dinámico de fragmentos de código. | |
 | `Alt + Shift + A` | **Internal Libs**: Sugiere funciones y métodos de librerías de Scriptcase. | SERVIDOR PYTHON |
 | instancia-> o clase:: | **Clases**: Sugiere funciones y métodos de clases e instancias. | SERVIDOR PYTHON |
@@ -64,15 +62,11 @@ Usa `Alt + Shift + K` para procesar instrucciones mediante comentarios:
 
 ## El servidor Python requiere los siguientes parámetros para operar las funciones avanzadas:
 
-* DIR_TEMP: el directorio de trabajo de php-fixer (formateador externo)
 * PHP_PATH: localizacion del binario de php
-* PHP_FIXER_PATH: ejecutable de php-fixer
 
 ```json
 {
-  "DIR_TEMP": "/tmp/sc_fixer",
   "PHP_PATH": "/usr/bin/php",
-  "PHP_FIXER_PATH": "/ruta/a/php-cs-fixer",
   "GROQ_API_KEY": "tu_api_key_aqui",
 }
 
