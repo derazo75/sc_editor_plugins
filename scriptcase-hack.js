@@ -4,7 +4,8 @@
 // @version      1.0.0
 // @description  Combinación completa de herramientas de análisis, IA y personalización de UX para Scriptcase
 // @author       Fernando Erazo
-// @match        *://*/scriptcase/devel/*
+// @match        *://*/scriptcase/devel/iface/event.php*
+// @match        *://*/scriptcase/devel/compat/nm_edit_php_edit.php*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @connect      raw.githubusercontent.com
