@@ -12,6 +12,7 @@ Este Script de Usuario (Tampermonkey) agrega al editor nativo de **Scriptcase** 
 4.  **Pegar Código**: Borra el contenido inicial y pega el código de `scriptcase-hack-editor.js`.
 5.  **Configurar Snippets**: El script busca un archivo `snippets.json` remoto. Asegúrate de configurar la URL de tu repositorio.
 6.  **Levantar Backend**: Ejecuta el servidor Python (`editor_sc_v0.2.py`) para habilitar IA y Linter (No es necesario para las demás características).
+7.  **apiKey GROQ:** en la linea 32 de scriptcase-hack.js coloque su APIKEY de GROQ (https://groq.com/)
 
 ---
 
@@ -51,7 +52,7 @@ Usa `Alt + Shift + K` para procesar instrucciones mediante comentarios:
 
 | Combinación | Acción | Requerimiento |
 | :--- | :--- | :--- |
-| `Alt + Shift + K` | **IA Magic**: Ejecuta la tarea del comentario o procesa el código seleccionado. | SERVIDOR PYTHON |
+| `Alt + Shift + K` | **IA Magic**: Ejecuta la tarea del comentario o procesa el código seleccionado. |  |
 | `Alt + Shift + S` | **Check Syntax**: Ejecuta el linter para buscar errores. | SERVIDOR PYTHON |
 | `Shift + Alt + F` | **Prettier PHP Plugin**: Re-indenta visualmente todo el código del editor. | |
 | `Ctrl + Alt + Space`| **Snippets**: Abre el buscador dinámico de fragmentos de código. | |
@@ -62,12 +63,8 @@ Usa `Alt + Shift + K` para procesar instrucciones mediante comentarios:
 
 ## El servidor Python requiere los siguientes parámetros para operar las funciones avanzadas:
 
-* PHP_PATH: localizacion del binario de php
-
 ```json
 {
   "PHP_PATH": "/usr/bin/php",
-  "GROQ_API_KEY": "tu_api_key_aqui",
+  "RUTAS_LIBS": ["/var/www/apache2/scriptcase/devel/conf/sys/libraries", "/var/www/apache2/scriptcase/devel/conf/sys/lib", "/var/www/apache2/scriptcase/devel/conf/grp/MyProject/lib"]
 }
-
-
