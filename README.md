@@ -9,9 +9,9 @@ Este Script de Usuario (Tampermonkey) agrega al editor nativo de **Scriptcase** 
 1.  **Instalar Tampermonkey**: Descarga la extensión para tu navegador (Chrome, Edge, Firefox).
 2.  **Activar Scripts**: Asegúrate de que los scripts de usuario estén activados en el panel de Tampermonkey.
 3.  **Crear Nuevo Script**: En el panel de control de Tampermonkey, haz clic en el botón **"+" (Añadir nuevo script)**.
-4.  **Pegar Código**: Borra el contenido inicial y pega el código de `scriptcase-hack-editor.js`.
+4.  **Pegar Código**: Borra el contenido inicial y pega el código de `scriptcase-hack.js`.
 5.  **Configurar Snippets**: El script busca un archivo `snippets.json` remoto. Asegúrate de configurar la URL de tu repositorio.
-6.  **Levantar Backend**: Ejecuta el servidor Python (`editor_sc_v0.2.py`) para habilitar IA y Linter (No es necesario para las demás características).
+6.  **Levantar Backend**: Ejecuta el servidor Python (`editor_sc_v0.2.py`) para habilitar Linter y algunas funciones de autocompletado (No es necesario para las demás características).
 7.  **apiKey GROQ:** en la linea 33 de scriptcase-hack.js coloque su APIKEY de GROQ (https://groq.com/)
 
 ---
